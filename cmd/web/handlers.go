@@ -1,60 +1,76 @@
 package main
 
 import (
-  "fmt"
+  "errors"
   "net/http"
   "strconv"
-  "html/template"
-  "log"
+  "fmt"
+
+  "snippetbox.leen2233.me/internal/models"
 )
 
 
-func home(w http.ResponseWriter, r *http.Request) {
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
   if r.URL.Path != "/" {
-    http.NotFound(w, r)
+    app.notFound(w)
     return
   }
 
-  files := []string{
-    "./ui/html/base.tmpl",
-    "./ui/html/partials/nav.tmpl",
-    "./ui/html/pages/home.tmpl",
-  }
-
-  ts, err := template.ParseFiles(files...)
+  snippets, err := app.snippets.Latest()
   if err != nil {
-    log.Println(err.Error())
-    http.Error(w, "Internal sever error", 500)
+    app.serverError(w, err)
     return
-  }
+  } 
 
-  err = ts.ExecuteTemplate(w, "base", nil)
-  if err != nil {
-    log.Println(err.Error())
-    http.Error(w, "Internal server error", 500)
-  }
+  data := app.newTemplateData(r)
+  data.Snippets = snippets
+
+  app.render(w, 200, "home.tmpl", data)
 }
 
 
-func ViewSnippet(w http.ResponseWriter, r *http.Request) {
+func (app *application) ViewSnippet(w http.ResponseWriter, r *http.Request) {
   id, err := strconv.Atoi(r.URL.Query().Get("id"))
 
   if err != nil || id < 1 {
-    http.NotFound(w, r)
+    app.notFound(w)
     return
   }
 
-  fmt.Fprintf(w, "View snippet with id: %d", id)
+  snippet, err := app.snippets.Get(id)
+  if err != nil {
+    if errors.Is(err, models.ErrNoRecord) {
+      app.notFound(w)
+    } else {
+      app.serverError(w, err)
+    }
+    return
+  }
+
+  data := app.newTemplateData(r)
+  data.Snippet = snippet
+
+  app.render(w, 200, "view.tmpl", data)
 }
 
 
-func CreateSnippet(w http.ResponseWriter, r *http.Request) {
+func (app *application) CreateSnippet(w http.ResponseWriter, r *http.Request) {
   if r.Method != http.MethodPost {
     w.Header().Set("Allow", "POST")
-    http.Error(w, "Method not allowed", 405)
+    app.clientError(w, 405)
     return
   }
 
-  w.Write([]byte("Creating new snippet"))
+  title := "Story"
+  content := "Story about loser"
+  expires := 7
+
+  id, err := app.snippets.Insert(title, content, expires)
+  if err != nil {
+    app.serverError(w, err)
+    return
+  }
+ 
+  http.Redirect(w, r, fmt.Sprintf("/view?id=%d", id), http.StatusSeeOther)
 }
 
