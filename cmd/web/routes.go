@@ -5,7 +5,7 @@ import (
 )
 
 
-func (app *application) routes() *http.ServeMux {
+func (app *application) routes() http.Handler {
   mux := http.NewServeMux()
 
   fileserver := http.FileServer(http.Dir("./ui/static/"))
@@ -15,6 +15,6 @@ func (app *application) routes() *http.ServeMux {
   mux.HandleFunc("/view", app.ViewSnippet)
   mux.HandleFunc("/create", app.CreateSnippet)
 
-  return mux
+  return logRequest(secureHeaders(mux))
 }
 
