@@ -6,16 +6,12 @@ import (
   "strconv"
   "fmt"
 
-  "snippetbox.leen2233.me/internal/models"
+  "github.com/julienschmidt/httprouter"
+	"snippetbox.leen2233.me/internal/models"
 )
 
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-  if r.URL.Path != "/" {
-    app.notFound(w)
-    return
-  }
-
   snippets, err := app.snippets.Latest()
   if err != nil {
     app.serverError(w, err)
@@ -30,8 +26,9 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 
 func (app *application) ViewSnippet(w http.ResponseWriter, r *http.Request) {
-  id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	params := httprouter.ParamsFromContext(r.Context())
 
+	id, err := strconv.Atoi(params.ByName("id"))
   if err != nil || id < 1 {
     app.notFound(w)
     return
@@ -54,7 +51,11 @@ func (app *application) ViewSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func (app *application) CreateSnippet(w http.ResponseWriter, r *http.Request) {
+func (app *application) CreateSnippetForm(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Form template"))
+}
+
+func (app *application) CreateSnippetPost(w http.ResponseWriter, r *http.Request) {
   if r.Method != http.MethodPost {
     w.Header().Set("Allow", "POST")
     app.clientError(w, 405)
@@ -71,6 +72,6 @@ func (app *application) CreateSnippet(w http.ResponseWriter, r *http.Request) {
     return
   }
  
-  http.Redirect(w, r, fmt.Sprintf("/view?id=%d", id), http.StatusSeeOther)
+  http.Redirect(w, r, fmt.Sprintf("/view/%d", id), http.StatusSeeOther)
 }
 
