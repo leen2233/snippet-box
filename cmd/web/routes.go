@@ -20,10 +20,10 @@ func (app *application) routes() http.Handler {
 
 	dynamic := alice.New(app.sessionManager.LoadAndSave)
 
-  router.HandlerFunc(http.MethodGet, "/", dynamic.ThenFunc(app.home))
-	router.HandlerFunc(http.MethodGet, "/view/:id", dynamic.ThenFunc(app.ViewSnippet))
-	router.HandlerFunc(http.MethodGet, "/create", dynamic.ThenFunc(app.CreateSnippetForm))
-  router.HandlerFunc(http.MethodPost, "/create", dynamic.ThenFunc(app.CreateSnippetPost))
+  router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home))
+	router.Handler(http.MethodGet, "/view/:id", dynamic.ThenFunc(app.ViewSnippet))
+	router.Handler(http.MethodGet, "/create", dynamic.ThenFunc(app.CreateSnippetForm))
+  router.Handler(http.MethodPost, "/create", dynamic.ThenFunc(app.CreateSnippetPost))
 
 	standard := alice.New(app.recoverPanic, logRequest, secureHeaders)
 

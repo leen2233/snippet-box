@@ -95,7 +95,9 @@ func (app *application) CreateSnippetPost(w http.ResponseWriter, r *http.Request
     app.serverError(w, err)
     return
   }
- 
+
+  app.sessionManager.Put(r.Context(), "flash", "Snippet Successfully created!")
+
   http.Redirect(w, r, fmt.Sprintf("/view/%d", id), http.StatusSeeOther)
 }
 

@@ -7,6 +7,8 @@ import (
   "net/http"
   "html/template"
   "os"
+  "time"
+  "crypto/tls"
 
   "snippetbox.leen2233.me/internal/models"
 
@@ -55,8 +57,9 @@ func main() {
 	formDecoder := form.NewDecoder()
 
 	sessionManager := scs.New()
-	sessionManager.Store = mysqlstore.New(dsn)
+	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
+  sessionManager.Cookie.Secure = true
 
   app := &application{
     errorLog: errorLog,
@@ -67,15 +70,23 @@ func main() {
 		sessionManager: sessionManager,
   }
 
+  tlsConfig := &tls.Config{
+    CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+  }
+
   // initilize custom Server
   srv := &http.Server{
     Addr:     *addr,
     ErrorLog: errorLog,
     Handler:  app.routes(),
+    TLSConfig: tlsConfig,
+    IdleTimeout: time.Minute,
+    ReadTimeout: 5 * time.Second,
+    WriteTimeout: 10 * time.Second,
   }
 
   infoLog.Printf("Listening on port http://localhost%s", *addr)
-  err = srv.ListenAndServe()
+  err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
   errorLog.Fatal(err)
 }
 
