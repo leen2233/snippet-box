@@ -22,6 +22,7 @@ func (app *application) routes() http.Handler {
 	dynamic := alice.New(app.sessionManager.LoadAndSave, noSurf, app.authenticate)
 
   router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home))
+  router.HandlerFunc(http.MethodGet, "/ping", ping)
 	router.Handler(http.MethodGet, "/view/:id", dynamic.ThenFunc(app.ViewSnippet))
   router.Handler(http.MethodGet, "/user/signup", dynamic.ThenFunc(app.userSignupForm))
   router.Handler(http.MethodPost, "/user/signup", dynamic.ThenFunc(app.userSignupPost))
