@@ -29,14 +29,17 @@ type application struct {
   cachedTemplates map[string]*template.Template
 	formDecoder *form.Decoder
 	sessionManager *scs.SessionManager
+  debugMode   bool
 }
 
 
 func main() {
   // command-line argument
   var addr, dsn *string
+  var debug *bool
   addr = flag.String("addr", ":4000", "HTTP network address")
   dsn = flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
+  debug = flag.Bool("debug", false, "In debug mode")
 
   flag.Parse()
 
@@ -70,6 +73,7 @@ func main() {
     cachedTemplates: cachedTemplates,
 		formDecoder: formDecoder,
 		sessionManager: sessionManager,
+    debugMode: *debug,
   }
 
   tlsConfig := &tls.Config{
@@ -87,7 +91,7 @@ func main() {
     WriteTimeout: 10 * time.Second,
   }
 
-  infoLog.Printf("Listening on port http://localhost%s", *addr)
+  infoLog.Printf("Listening on port http://localhost%s  DEBUG = %v", *addr, *debug)
   err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
   errorLog.Fatal(err)
 }
