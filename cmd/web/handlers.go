@@ -230,3 +230,9 @@ func ping(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("ok"))
 }
 
+
+func (app *application) about(w http.ResponseWriter, r *http.Request) {
+  data := app.newTemplateData(r)
+  app.render(w, 200, "about.tmpl", data)
+}
+
