@@ -236,3 +236,19 @@ func (app *application) about(w http.ResponseWriter, r *http.Request) {
   app.render(w, 200, "about.tmpl", data)
 }
 
+
+func (app *application) profile (w http.ResponseWriter, r *http.Request) {
+  userId := app.sessionManager.GetInt(r.Context(), "authenticatedUserId")
+
+  user, err := app.users.Get(userId)
+  if err != nil {
+    app.serverError(w, err)
+    return
+  }
+
+  data := app.newTemplateData(r)
+  data.User = user
+
+  app.render(w, 200, "profile.tmpl", data)
+}
+

@@ -35,6 +35,7 @@ func (app *application) routes() http.Handler {
 	router.Handler(http.MethodGet, "/create", protected.ThenFunc(app.CreateSnippetForm))
   router.Handler(http.MethodPost, "/create", protected.ThenFunc(app.CreateSnippetPost))
   router.Handler(http.MethodPost, "/user/logout", protected.ThenFunc(app.userLogoutPost))
+  router.Handler(http.MethodGet, "/profile", protected.ThenFunc(app.profile))
 
 	standard := alice.New(app.recoverPanic, logRequest, secureHeaders)
 
