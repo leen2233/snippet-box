@@ -186,6 +186,11 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  nextUrl := r.URL.Query().Get("next")
+  if nextUrl == "" {
+    nextUrl = "/"
+  }
+
   id, err := app.users.Authenticate(form.Email, form.Password) 
   if err != nil {
     if errors.Is(err, models.ErrInvalidCredentials) {
@@ -210,7 +215,7 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
   // successful login
   app.sessionManager.Put(r.Context(), "authenticatedUserId", id)
   app.sessionManager.Put(r.Context(), "flash", "Login Successfull!")
-  http.Redirect(w, r, "/", http.StatusSeeOther)
+  http.Redirect(w, r, nextUrl, http.StatusSeeOther)
 }
 
 func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
