@@ -32,6 +32,12 @@ type userLoginForm struct {
   validator.Validator  `form:-`
 }
 
+type ChangePasswordForm struct {
+  CurrentPassword     string `form:"currentPassword"`
+  NewPassword         string `form:"newPassword"`
+  PasswordConfirm     string `form:"passwordConfirm"`
+  validator.Validator        `form:-`
+}
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
   snippets, err := app.snippets.Latest()
@@ -255,5 +261,54 @@ func (app *application) profile (w http.ResponseWriter, r *http.Request) {
   data.User = user
 
   app.render(w, 200, "profile.tmpl", data)
+}
+
+
+func (app *application) changePasswordForm (w http.ResponseWriter, r *http.Request) {
+  data := app.newTemplateData(r)
+  form := ChangePasswordForm{}
+  data.Form = form
+
+  app.render(w, 200, "change_password.tmpl", data)
+}
+
+
+func (app *application) changePasswordPost (w http.ResponseWriter, r *http.Request) {
+  var form ChangePasswordForm
+
+  err := app.decodePostForm(r, &form)
+  if err != nil {
+    app.serverError(w, err)
+  }
+
+  form.CheckField(validator.MinChars(form.CurrentPassword, 8), "currentPassword", "Current Password should be at least 8 characters") 
+  form.CheckField(validator.MinChars(form.NewPassword, 8), "newPassword", "New Password should be at least 8 characters")
+  form.CheckField(validator.Equal(form.NewPassword, form.PasswordConfirm), "newPassword", "Passwords don't match'")
+  form.CheckField(validator.Equal(form.NewPassword, form.PasswordConfirm), "passwordConfirm", "Passwords don't match'")
+
+  if !form.Valid() {
+    data := app.newTemplateData(r)
+    data.Form = form
+
+    app.render(w, 400, "change_password.tmpl", data)
+  }
+
+  userId := app.sessionManager.GetInt(r.Context(), "authenticatedUserId")
+  err = app.users.ChangePassword(userId, form.CurrentPassword, form.NewPassword)
+  if err != nil {
+    if errors.Is(models.ErrInvalidCurrentPassword, err) {
+      form.AddFieldError("currentPassword", "Current Password is invalid")
+
+      data := app.newTemplateData(r)
+      data.Form = form
+      app.render(w, 400, "change_password.tmpl", data)
+    } else {
+      app.serverError(w, err)
+      return
+    }
+  }
+
+  app.sessionManager.Put(r.Context(), "flash", "Password is successfully changed")
+  http.Redirect(w, r, "/", http.StatusSeeOther)  
 }
 

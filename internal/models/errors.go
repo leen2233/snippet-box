@@ -10,3 +10,5 @@ var ErrInvalidCredentials = errors.New("models: invalid credentials")
 
 var ErrDuplicateEmail = errors.New("models: duplicate email")
 
+var ErrInvalidCurrentPassword = errors.New("models: invalid current password")
+
